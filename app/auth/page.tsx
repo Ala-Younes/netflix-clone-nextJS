@@ -1,16 +1,53 @@
 "use client";
 import Input from "@/components/Input";
+import axios, { AxiosError } from "axios";
 import Image from "next/image";
 import { useCallback, useState } from "react";
+import UserCredentials from "../models/user";
 
 type AuthVariant = "login" | "register";
 
 const Auth = () => {
-  const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
-  const [password, setPassword] = useState("");
+  const [user, setUser] = useState<UserCredentials>({
+    email: "",
+    name: "",
+    password: "",
+  });
 
   const [variant, setVariant] = useState<AuthVariant>("login");
+
+  const handleChange = (field: keyof UserCredentials, value: string) => {
+    setUser((prevUser) => ({
+      ...prevUser,
+      [field]: value,
+    }));
+  };
+
+  const register = useCallback(async () => {
+    try {
+      axios
+        .post("/api/register", user)
+        .then((response) => {
+          console.log(response.status);
+        })
+        .catch((error) => {
+          if (error instanceof AxiosError) {
+            if (error.response) {
+              console.log({
+                error: {
+                  response: error.response.data,
+                },
+                status: error.response.status,
+              });
+            }
+          } else {
+            console.log("Non-Axios Error", error.message);
+          }
+        });
+    } catch (error) {
+      console.log(error);
+    }
+  }, [user]);
 
   const toggleVariant = useCallback(() => {
     setVariant((currentVariant) =>
@@ -40,26 +77,29 @@ const Auth = () => {
                 <Input
                   id={"name"}
                   type="text"
-                  onChange={(e) => setName(e.target.value)}
-                  value={name}
+                  onChange={(e) => handleChange("name", e.target.value)}
+                  value={user.name}
                   label={"Username"}
                 />
               )}
               <Input
                 id={"email"}
                 type="email"
-                onChange={(e) => setEmail(e.target.value)}
-                value={email}
+                onChange={(e) => handleChange("email", e.target.value)}
+                value={user.email}
                 label={"Email"}
               />
               <Input
                 id={"password"}
                 type="password"
-                onChange={(e) => setPassword(e.target.value)}
-                value={password}
+                onChange={(e) => handleChange("password", e.target.value)}
+                value={user.password}
                 label={"Password"}
               />
-              <button className="bg-red-600 py-3 text-white rounded-md w-full mt-10 hover:bg-red-700 transition">
+              <button
+                onClick={register}
+                className="bg-red-600 py-3 text-white rounded-md w-full mt-10 hover:bg-red-700 transition"
+              >
                 {variant === "login" ? "Login" : "Sign Up"}
               </button>
               <p className="flex justify-around text-neutral-500 mt-12">
